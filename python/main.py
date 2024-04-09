@@ -915,7 +915,7 @@ def create_directory_structure(base_dir):
     print(f"Directory structure created successfully in {base_dir}.")
 
 def correct_dicom_directory_structure(database_path):
-    print(os.getcwd())
+    print("Executing correction of dicom directory structure")
 
     # Provide a list of the cancer types to check
     cancer_types = ["breast", "colorectal", "lung", "prostate"]
@@ -926,7 +926,7 @@ def correct_dicom_directory_structure(database_path):
                      "lung": ["dp1", "dp2"],
                      "prostate": ["dp1", "dp2"]}
 
-    create_directory_structure("D:\INCISIVE\GITLAB\curation_scripts\python\tmp")
+    create_directory_structure("tmp")
 
     for cancer_type in cancer_types:
         for data_provider in data_providers[cancer_type]:
