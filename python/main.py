@@ -924,7 +924,7 @@ def correct_dicom_directory_structure(database_path):
                      "lung": ["dp1", "dp2"],
                      "prostate": ["dp1", "dp2"]}
 
-    create_directory_structure("tmp")
+    create_directory_structure("D:\INCISIVE\GITLAB\curation_scripts\python\tmp")
 
     for cancer_type in cancer_types:
         for data_provider in data_providers[cancer_type]:
