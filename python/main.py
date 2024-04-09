@@ -915,6 +915,8 @@ def create_directory_structure(base_dir):
     print(f"Directory structure created successfully in {base_dir}.")
 
 def correct_dicom_directory_structure(database_path):
+    print(os.getcwd())
+
     # Provide a list of the cancer types to check
     cancer_types = ["breast", "colorectal", "lung", "prostate"]
 
