@@ -592,7 +592,7 @@ def find_average_resolution():
         for data_provider in data_providers:
 
             # Define the target directory to examine based on cancer type and data provider name
-            database_path = r"python/prm/incisive2"
+            database_path = r"prm/incisive2"
             working_path = f"{database_path}/{cancer_type}/{data_provider}/data"
 
             print(f"\nCalculating average resolution for {data_provider}-{cancer_type}.\n")
@@ -683,7 +683,7 @@ def find_devices():
         for data_provider in data_providers:
 
             # Define the target directory to examine based on cancer type and data provider name
-            database_path = r"python/prm/incisive2"
+            database_path = r"prm/incisive2"
             working_path = f"{database_path}/{cancer_type}/{data_provider}/data"
 
             print(f"\nCalculating devices for {data_provider}-{cancer_type}.\n")
@@ -718,7 +718,7 @@ def find_devices():
     sorted_devices = dict(sorted(devices.items(), key=lambda item: item[1], reverse=True))
 
     # Remove the existing report file if it exists
-    file_path = r"python/prm/devices.txt"
+    file_path = r"tmp/devices.txt"
     if os.path.exists(file_path):
         try:
             os.remove(file_path)
@@ -759,7 +759,7 @@ def count_dicom_images():
         for data_provider in data_providers:
 
             # Define the target directory to examine based on cancer type and data provider name
-            database_path = r"python/prm/incisive2"
+            database_path = r"prm/incisive2"
             working_path = f"{database_path}/{cancer_type}/{data_provider}/data"
 
             print(f"\nCalculating statistcs for {data_provider}-{cancer_type}.\n")
@@ -840,7 +840,7 @@ def find_number_images_per_modality():
         for data_provider in data_providers:
 
             # Define the target directory to examine based on cancer type and data provider name
-            database_path = r"python/prm/incisive2"
+            database_path = r"prm/incisive2"
             working_path = f"{database_path}/{cancer_type}/{data_provider}/data"
 
             print(f"\nCalculating number of DICOM per modality for {data_provider}-{cancer_type}.\n")
@@ -875,7 +875,7 @@ def find_number_images_per_modality():
     sorted_images_per_modality = dict(sorted(images_per_modality.items(), key=lambda item: item[1], reverse=True))
 
     # Remove the existing report file if it exists
-    file_path = r"python/prm/images_per_modality.txt"
+    file_path = r"tmp/images_per_modality.txt"
     if os.path.exists(file_path):
         try:
             os.remove(file_path)
@@ -902,11 +902,11 @@ def main():
         for data_provider in data_providers[cancer_type]:
 
             # Define the target directory to examine based on cancer type and data provider name
-            database_path = r"python/prm/incisive2"
+            database_path = r"prm/incisive2"
             working_path = rf"{database_path}/{cancer_type}/{data_provider}/data"
 
             # Define the report file path
-            txt_file_path = rf"python/prm/reports/{data_provider}/{cancer_type}/report_issues.txt"
+            txt_file_path = rf"tmp/reports/{data_provider}/{cancer_type}/report_issues.txt"
 
             # Remove the existing report file if it exists
             if os.path.exists(txt_file_path):
