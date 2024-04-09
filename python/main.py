@@ -550,6 +550,344 @@ def get_series_attributes(serie, file):
 
     return num_dicom_files, num_nifti_files, num_nifti_slices, num_sequences, dicom_sequences
 
+def find_average_resolution():
+
+    # Define a dictionary to store histograms for each image modality
+    resolutions = {}
+
+    # Provide a list of the cancer types to check
+    cancer_types = ["breast", "colorectal", "lung", "prostate"]
+
+    # Select the data provider
+    dps = {"breast": ["dp1", "dp2"],
+            "colorectal": ["dp1", "dp2"],
+            "lung": ["dp1", "dp2"],
+            "prostate": ["dp1", "dp2"]}
+
+    def find_modality_resolution(serie_path):
+
+        dicom_filenames = [os.path.join(serie_path, filename) for filename in os.listdir(serie_path) if filename.endswith(".dcm")]
+        if len(dicom_filenames):
+            dicom_name = dicom_filenames[0]
+            try:
+                image = dicom.dcmread(dicom_name, specific_tags=[(0x0008, 0x0060), (0x0028, 0x0010), (0x0028, 0x0011)])
+                modality = image.Modality
+                resolution = (image.Rows, image.Columns)
+            except Exception as e:
+                return None, None
+        else:
+            return None, None
+
+        return modality, resolution
+
+    # Function to update the resolutions
+    def update_resolutions(resolution, image_modality):
+        if resolution and image_modality:
+            if image_modality not in resolutions:
+                resolutions[image_modality] = []
+            resolutions[image_modality].append(resolution)
+
+    for cancer_type in cancer_types:
+        data_providers = dps[cancer_type]
+        for data_provider in data_providers:
+
+            # Define the target directory to examine based on cancer type and data provider name
+            database_path = r"python/prm/incisive2"
+            working_path = f"{database_path}/{cancer_type}/{data_provider}/data"
+
+            print(f"\nCalculating average resolution for {data_provider}-{cancer_type}.\n")
+
+            # Get all patients paths
+            patients_paths = [os.path.join(working_path, filename) for filename in os.listdir(working_path) if os.path.isdir(os.path.join(working_path, filename))]
+
+            # Get all studies and check for NIFTI files outside of Series
+            studies_paths = []
+            for patient_path in patients_paths:
+                studies = os.listdir(patient_path)
+                for study in studies:
+                    study_path = os.path.join(patient_path, study)
+                    if os.path.isdir(study_path):
+                        studies_paths.append(study_path)
+
+            # Get all series paths
+            series_paths = []
+            for study_path in studies_paths:
+                series = os.listdir(study_path)
+                for serie in series:
+                    serie_path = os.path.join(study_path, serie)
+                    if os.path.isdir(serie_path):
+                        series_paths.append(serie_path)
+
+            for serie_path in tqdm(series_paths, total=len(series_paths)):
+                if len(os.listdir(serie_path)) > 0:
+                    modality, resolution = find_modality_resolution(serie_path)
+                    update_resolutions(resolution, modality)
+
+    # Calculate the average resolution for each image modality
+    average_resolutions = {}
+    for image_modality, resolutions_list in resolutions.items():
+        total_rows = 0
+        total_columns = 0
+        for resolution in resolutions_list:
+            total_rows += resolution[0]
+            total_columns += resolution[1]
+        average_rows = total_rows / len(resolutions_list)
+        average_columns = total_columns / len(resolutions_list)
+        average_resolutions[image_modality] = (average_rows, average_columns)
+
+    # Print the average resolutions
+    for image_modality, average_resolution in average_resolutions.items():
+        print(f"Image Modality: {image_modality}, Average Resolution: {average_resolution}")
+
+def find_devices():
+    # Define a dictionary to store histograms for each image modality
+    devices = {}
+
+    # Provide a list of the cancer types to check
+    cancer_types = ["breast", "colorectal", "lung", "prostate"]
+
+    # Select the data provider
+    dps = {"breast": ["dp1", "dp2"],
+                     "colorectal": ["dp1", "dp2"],
+                     "lung": ["dp1", "dp2"],
+                     "prostate": ["dp1", "dp2"]}
+
+    def find_manufacturer_model(serie_path):
+
+        dicom_filenames = [os.path.join(serie_path, filename) for filename in os.listdir(serie_path) if filename.endswith(".dcm")]
+        if len(dicom_filenames):
+            dicom_name = dicom_filenames[0]
+            try:
+                image = dicom.dcmread(dicom_name, specific_tags=[(0x0008, 0x0070), (0x0008, 0x1090)])
+                manufacturer = image.Manufacturer
+                model = image.ManufacturerModelName
+            except Exception as e:
+                return None, None
+        else:
+            return None, None
+
+        return manufacturer, model
+
+    # Function to update the resolutions
+    def update_devices(manufacturer, model):
+        if manufacturer and model:
+            device = f"{manufacturer} - {model}"
+            if device not in devices:
+                devices[device] = 1
+            else:
+                devices[device] += 1
+            # devices.append(device)
+
+    for cancer_type in cancer_types:
+        data_providers = dps[cancer_type]
+        for data_provider in data_providers:
+
+            # Define the target directory to examine based on cancer type and data provider name
+            database_path = r"python/prm/incisive2"
+            working_path = f"{database_path}/{cancer_type}/{data_provider}/data"
+
+            print(f"\nCalculating devices for {data_provider}-{cancer_type}.\n")
+
+            # Get all patients paths
+            patients_paths = [os.path.join(working_path, filename) for filename in os.listdir(working_path) if os.path.isdir(os.path.join(working_path, filename))]
+
+            # Get all studies and check for NIFTI files outside of Series
+            studies_paths = []
+            for patient_path in patients_paths:
+                studies = os.listdir(patient_path)
+                for study in studies:
+                    study_path = os.path.join(patient_path, study)
+                    if os.path.isdir(study_path):
+                        studies_paths.append(study_path)
+
+            # Get all series paths
+            series_paths = []
+            for study_path in studies_paths:
+                series = os.listdir(study_path)
+                for serie in series:
+                    serie_path = os.path.join(study_path, serie)
+                    if os.path.isdir(serie_path):
+                        series_paths.append(serie_path)
+
+            for serie_path in tqdm(series_paths, total=len(series_paths)):
+                for _ in range(len(os.listdir(serie_path))):
+                    if len(os.listdir(serie_path)) > 0:
+                        manufacturer, model = find_manufacturer_model(serie_path)
+                        update_devices(manufacturer, model)
+
+    sorted_devices = dict(sorted(devices.items(), key=lambda item: item[1], reverse=True))
+
+    # Remove the existing report file if it exists
+    file_path = r"python/prm/devices.txt"
+    if os.path.exists(file_path):
+        try:
+            os.remove(file_path)
+            print(f"{file_path} has been deleted successfully.")
+        except OSError as e:
+            print(f"Error deleting {file_path}: {e}")
+
+    # Print the average resolutions
+    with open(file_path, "a") as f:
+        for device, occ in sorted_devices.items():
+            f.write(f"Manufacturer and Model: {device}, Occurences: {occ}\n")
+
+def count_dicom_images():
+
+    def count_dicom_files(folder_path):
+        dicom_count = 0
+
+        for root, _, files in os.walk(folder_path):
+            for filename in files:
+                file_path = os.path.join(root, filename)
+                if file_path.endswith(".dcm"):
+                    dicom_count += 1
+
+        return dicom_count
+
+    # Provide a list of the cancer types to check
+    cancer_types = ["breast", "colorectal", "lung", "prostate"]
+
+    # Select the data provider
+    dps = {"breast": ["dp1", "dp2"],
+                     "colorectal": ["dp1", "dp2"],
+                     "lung": ["dp1", "dp2"],
+                     "prostate": ["dp1", "dp2"]}
+
+    for cancer_type in cancer_types:
+        dicom_per_cancer_type = 0
+        data_providers = dps[cancer_type]
+        for data_provider in data_providers:
+
+            # Define the target directory to examine based on cancer type and data provider name
+            database_path = r"python/prm/incisive2"
+            working_path = f"{database_path}/{cancer_type}/{data_provider}/data"
+
+            print(f"\nCalculating statistcs for {data_provider}-{cancer_type}.\n")
+
+            # Get all patients paths
+            patients_paths = [os.path.join(working_path, filename) for filename in os.listdir(working_path) if os.path.isdir(os.path.join(working_path, filename))]
+
+            # Get all studies and check for NIFTI files outside of Series
+            studies_paths = []
+            for patient_path in patients_paths:
+                studies = os.listdir(patient_path)
+                for study in studies:
+                    study_path = os.path.join(patient_path, study)
+                    if os.path.isdir(study_path):
+                        studies_paths.append(study_path)
+
+            # Get all series paths
+            series_paths = []
+            for study_path in studies_paths:
+                series = os.listdir(study_path)
+                for serie in series:
+                    serie_path = os.path.join(study_path, serie)
+                    if os.path.isdir(serie_path):
+                        series_paths.append(serie_path)
+
+            total_dicom = 0
+            for serie_path in tqdm(series_paths, total=len(series_paths)):
+                serie_dicom_count = count_dicom_files(serie_path)
+                total_dicom += serie_dicom_count
+
+            # print(f"Number of series: {len(series_paths)}")
+            # print(series_paths)
+
+            dicom_per_cancer_type += total_dicom
+            print(f"Total DICOM count: {total_dicom} for {data_provider}-{cancer_type}")
+        
+        print(f"\nTotal DICOM count: {dicom_per_cancer_type} for {cancer_type} cancer.")
+
+def find_number_images_per_modality():
+
+    # Define a dictionary to store histograms for each image modality
+    images_per_modality = {}
+
+    # Provide a list of the cancer types to check
+    cancer_types = ["breast", "colorectal", "lung", "prostate"]
+
+    # Select the data provider
+    dps = {"breast": ["dp1", "dp2"],
+                     "colorectal": ["dp1", "dp2"],
+                     "lung": ["dp1", "dp2"],
+                     "prostate": ["dp1", "dp2"]}
+
+    def find_modality(serie_path):
+
+        dicom_filenames = [os.path.join(serie_path, filename) for filename in os.listdir(serie_path) if filename.endswith(".dcm")]
+        if len(dicom_filenames):
+            dicom_name = dicom_filenames[0]
+            try:
+                image = dicom.dcmread(dicom_name, specific_tags=[(0x0008, 0x0060)])
+                modality = image.Modality
+            except Exception as e:
+                return None
+        else:
+            return None
+
+        return modality
+
+    # Function to update the resolutions
+    def update_images_per_modality(modality):
+        if modality:
+            if modality not in images_per_modality:
+                images_per_modality[modality] = 1
+            else:
+                images_per_modality[modality] += 1
+
+    for cancer_type in cancer_types:
+        data_providers = dps[cancer_type]
+        for data_provider in data_providers:
+
+            # Define the target directory to examine based on cancer type and data provider name
+            database_path = r"python/prm/incisive2"
+            working_path = f"{database_path}/{cancer_type}/{data_provider}/data"
+
+            print(f"\nCalculating number of DICOM per modality for {data_provider}-{cancer_type}.\n")
+
+            # Get all patients paths
+            patients_paths = [os.path.join(working_path, filename) for filename in os.listdir(working_path) if os.path.isdir(os.path.join(working_path, filename))]
+
+            # Get all studies and check for NIFTI files outside of Series
+            studies_paths = []
+            for patient_path in patients_paths:
+                studies = os.listdir(patient_path)
+                for study in studies:
+                    study_path = os.path.join(patient_path, study)
+                    if os.path.isdir(study_path):
+                        studies_paths.append(study_path)
+
+            # Get all series paths
+            series_paths = []
+            for study_path in studies_paths:
+                series = os.listdir(study_path)
+                for serie in series:
+                    serie_path = os.path.join(study_path, serie)
+                    if os.path.isdir(serie_path):
+                        series_paths.append(serie_path)
+
+            for serie_path in tqdm(series_paths, total=len(series_paths)):
+                if len(os.listdir(serie_path)) > 0:
+                    for _ in range(len(os.listdir(serie_path))):
+                        modality = find_modality(serie_path)
+                        update_images_per_modality(modality)
+
+    sorted_images_per_modality = dict(sorted(images_per_modality.items(), key=lambda item: item[1], reverse=True))
+
+    # Remove the existing report file if it exists
+    file_path = r"python/prm/images_per_modality.txt"
+    if os.path.exists(file_path):
+        try:
+            os.remove(file_path)
+            print(f"{file_path} has been deleted successfully.")
+        except OSError as e:
+            print(f"Error deleting {file_path}: {e}")
+
+    # Print the average resolutions
+    with open(file_path, "a") as f:
+        for modality, occ in sorted_images_per_modality.items():
+            f.write(f"For Modality: {modality} - Number of Images: {occ}\n")
+
 def main():
     # Provide a list of the cancer types to check
     cancer_types = ["breast", "colorectal", "lung", "prostate"]
@@ -564,7 +902,7 @@ def main():
         for data_provider in data_providers[cancer_type]:
 
             # Define the target directory to examine based on cancer type and data provider name
-            database_path = "python/prm/incisive2"
+            database_path = r"python/prm/incisive2"
             working_path = rf"{database_path}/{cancer_type}/{data_provider}/data"
 
             # Define the report file path
