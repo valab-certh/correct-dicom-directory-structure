@@ -1,10 +1,11 @@
 [project]
 dependencies = [
+  "fire==0.6.0",
   "pydicom==2.4.4",
   "nibabel==5.2.1",
   "tqdm==2.2.3"
 ]
-name = "UNKNOWN"
+name = "correct-dicom-directory-structure"
 version = "0.0.0"
 
 [project.optional-dependencies]
@@ -16,3 +17,9 @@ dev = [
   "ssort==0.12.4",
   "toml-sort==0.23.1"
 ]
+
+[project.scripts]
+correct_dicom_directory_structure = "main:main_cli"
+
+[tool.setuptools]
+py-modules = ["main"]

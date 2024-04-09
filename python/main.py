@@ -888,7 +888,7 @@ def find_number_images_per_modality():
         for modality, occ in sorted_images_per_modality.items():
             f.write(f"For Modality: {modality} - Number of Images: {occ}\n")
 
-def main():
+def correct_dicom_directory_structure(database_path):
     # Provide a list of the cancer types to check
     cancer_types = ["breast", "colorectal", "lung", "prostate"]
 
@@ -902,7 +902,7 @@ def main():
         for data_provider in data_providers[cancer_type]:
 
             # Define the target directory to examine based on cancer type and data provider name
-            database_path = r"prm/incisive2"
+            
             working_path = rf"{database_path}/{cancer_type}/{data_provider}/data"
 
             # Define the report file path
@@ -957,5 +957,10 @@ def main():
                     # Write the issues regarding the contents of the series to the .txt file
                     write_issues_to_report(series_path, num_dicom_files, num_nifti_files, num_nifti_slices, num_sequences, dicom_sequences, file)
 
+def main_cli() -> None:
+    import fire
+
+    fire.Fire(correct_dicom_directory_structure)
+
 if __name__ == '__main__':
-    main()
+    correct_dicom_directory_structure(r"prm/incisive2")
