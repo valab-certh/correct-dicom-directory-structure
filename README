@@ -17,7 +17,7 @@ cd python/ && make clean check all && cd ..
 cd python/ && make STAGING=1
 
 # Installation
-pip install https://api.github.com/repos/valab-certh/anonymize-excel/tarball/main#subdirectory=python
+pip install https://api.github.com/repos/valab-certh/correct-dicom-directory-structure/tarball/main#subdirectory=python
 
 # Usage
 correct_dicom_directory_structure "prm/incisive2"

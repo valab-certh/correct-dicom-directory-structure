@@ -888,6 +888,32 @@ def find_number_images_per_modality():
         for modality, occ in sorted_images_per_modality.items():
             f.write(f"For Modality: {modality} - Number of Images: {occ}\n")
 
+def create_directory_structure(base_dir):
+    """
+    Create directory structure as specified.
+
+    Args:
+        base_dir (str): Base directory where the structure will be created.
+
+    Returns:
+        None
+    """
+    # Create 'reports' directory
+    reports_dir = os.path.join(base_dir, "reports")
+    os.makedirs(reports_dir)
+
+    # Create data provider directories inside 'reports'
+    for dp in ["dp1", "dp2"]:
+        dp_dir = os.path.join(reports_dir, dp)
+        os.makedirs(dp_dir)
+
+        # Create subdirectories inside each data provider directory
+        for sub_dir in ["breast", "colorectal", "lung", "prostate"]:
+            sub_dir_path = os.path.join(dp_dir, sub_dir)
+            os.makedirs(sub_dir_path)
+
+    print(f"Directory structure created successfully in {base_dir}.")
+
 def correct_dicom_directory_structure(database_path):
     # Provide a list of the cancer types to check
     cancer_types = ["breast", "colorectal", "lung", "prostate"]
@@ -897,6 +923,8 @@ def correct_dicom_directory_structure(database_path):
                      "colorectal": ["dp1", "dp2"],
                      "lung": ["dp1", "dp2"],
                      "prostate": ["dp1", "dp2"]}
+
+    create_directory_structure("tmp")
 
     for cancer_type in cancer_types:
         for data_provider in data_providers[cancer_type]:
