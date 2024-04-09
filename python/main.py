@@ -898,8 +898,14 @@ def create_directory_structure(base_dir):
     Returns:
         None
     """
-    # Create 'reports' directory
+    # Check if 'reports' directory exists
     reports_dir = os.path.join(base_dir, "reports")
+    if os.path.exists(reports_dir):
+        print("'reports' directory already exists. Deleting...")
+        shutil.rmtree(reports_dir)
+        print("'reports' directory deleted.")
+
+    # Create 'reports' directory
     os.makedirs(reports_dir)
 
     # Create data provider directories inside 'reports'
