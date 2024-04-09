@@ -200,7 +200,7 @@ def split_series(current_series_path, names_of_sequences):
     for key in filenames_for_sequence:
         try:
             next_name = find_next_available_series_name(series_names_in_parent_dir)
-        except:
+        except Exception as e:
             print(f"Error at {current_series_path}: {e}")
         series_names_in_parent_dir.append(next_name)
 
@@ -550,19 +550,18 @@ def get_series_attributes(serie, file):
 
     return num_dicom_files, num_nifti_files, num_nifti_slices, num_sequences, dicom_sequences
 
-if __name__ == '__main__':
-
+def main():
     # Provide a list of the cancer types to check
     cancer_types = ["breast", "colorectal", "lung", "prostate"]
 
     # Select the data provider
-    data_provider = {"breast": ["dp1", "dp2"],
+    data_providers = {"breast": ["dp1", "dp2"],
                      "colorectal": ["dp1", "dp2"],
                      "lung": ["dp1", "dp2"],
                      "prostate": ["dp1", "dp2"]}
 
     for cancer_type in cancer_types:
-        for dp in data_provider[cancer_type]:
+        for data_provider in data_providers[cancer_type]:
 
             # Define the target directory to examine based on cancer type and data provider name
             database_path = "incisive2"
@@ -620,3 +619,5 @@ if __name__ == '__main__':
                     # Write the issues regarding the contents of the series to the .txt file
                     write_issues_to_report(series_path, num_dicom_files, num_nifti_files, num_nifti_slices, num_sequences, dicom_sequences, file)
 
+if __name__ == '__main__':
+    main()
