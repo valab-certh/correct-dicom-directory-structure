@@ -564,11 +564,11 @@ def main():
         for data_provider in data_providers[cancer_type]:
 
             # Define the target directory to examine based on cancer type and data provider name
-            database_path = "incisive2"
-            working_path = f"{database_path}/{cancer_type}/{data_provider}/data"
+            database_path = "python/prm/incisive2"
+            working_path = rf"{database_path}/{cancer_type}/{data_provider}/data"
 
             # Define the report file path
-            txt_file_path = f"reports/{data_provider}/{cancer_type}/report_issues.txt"
+            txt_file_path = rf"python/prm/reports/{data_provider}/{cancer_type}/report_issues.txt"
 
             # Remove the existing report file if it exists
             if os.path.exists(txt_file_path):
