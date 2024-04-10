@@ -921,7 +921,7 @@ def create_directory_structure(base_dir):
 
     print(f"Directory structure created successfully in {base_dir}.")
 
-def correct_dicom_directory_structure(database_path):
+def correct_dicom_directory_structure(database_path=r"prm/incisive2"):
     print("Executing correction of dicom directory structure")
 
     # Provide a list of the cancer types to check
@@ -1001,10 +1001,5 @@ def main_cli() -> None:
 
 if __name__ == '__main__':
 
-    # Initialize ArgumentParser
-    parser = argparse.ArgumentParser(description='Anonymize IDs Script')
-    parser.add_argument('--input_dir', type=str, default=r"prm/incisive2", help='Path to curate')
-    # Parse the arguments
-    args = parser.parse_args()
-
-    correct_dicom_directory_structure(args.input_dir)
+    database_path = r"prm/incisive2"
+    correct_dicom_directory_structure(database_path)
