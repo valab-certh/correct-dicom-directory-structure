@@ -2,6 +2,7 @@ import os
 import pydicom as dicom
 import nibabel as nib
 import shutil
+import argparse
 
 from tqdm import tqdm
 
@@ -999,4 +1000,11 @@ def main_cli() -> None:
     fire.Fire(correct_dicom_directory_structure)
 
 if __name__ == '__main__':
-    correct_dicom_directory_structure(r"prm/incisive2")
+
+    # Initialize ArgumentParser
+    parser = argparse.ArgumentParser(description='Anonymize IDs Script')
+    parser.add_argument('--input_dir', type=str, default=r"prm/incisive2", help='Path to curate')
+    # Parse the arguments
+    args = parser.parse_args()
+
+    correct_dicom_directory_structure(args.input_dir)
