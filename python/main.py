@@ -1,62 +1,63 @@
 import contextlib
 import os
 import shutil
+from pathlib import Path
 
 import nibabel as nib
 import pydicom as dicom
 from tqdm import tqdm
 
 
-def delete_crc_files_in_series(series_path) -> None:
+def delete_crc_files_in_series(series_path: Path) -> None:
     """
     Deletes '.crc' files in a series' directory.
 
     :param series_path: The path to the series' directory.
     """
     for file_name in os.listdir(series_path):
-        if file_name.endswith(".crc"):
-            file_path = os.path.join(series_path, file_name)
+        if file_name.suffix == ".crc":
+            file_path = Path(series_path, file_name)
             with contextlib.suppress(PermissionError):
-                os.remove(file_path)
+                Path.unlink(file_path)
 
 
-def delete_crc_files_in_study(study_path) -> None:
+def delete_crc_files_in_study(study_path: Path) -> None:
     """
     Recursively deletes '.crc' files in a study's directory.
 
     :param study_path: The path to the study's directory.
     """
     for series_folder in os.listdir(study_path):
-        series_path = os.path.join(study_path, series_folder)
-        if os.path.isdir(series_path):
+        series_path = Path(study_path, series_folder)
+        if Path.is_dir(series_path):
             delete_crc_files_in_series(series_path)
 
 
-def delete_crc_files_in_patient(patient_path) -> None:
+def delete_crc_files_in_patient(patient_path: Path) -> None:
     """
     Recursively deletes '.crc' files in a patient's directory.
 
     :param patient_path: The path to the patient's directory.
     """
     for study_folder in os.listdir(patient_path):
-        study_path = os.path.join(patient_path, study_folder)
-        if os.path.isdir(study_path):
+        study_path = Path(patient_path, study_folder)
+        if Path.is_dir(study_path):
             delete_crc_files_in_study(study_path)
 
 
-def delete_crc_files(root_directory) -> None:
+def delete_crc_files(root_directory: Path) -> None:
     """
     Recursively deletes files with the '.crc' extension in the specified root directory and its subdirectories.
 
     :param root_directory: The root directory to start searching for '.crc' files.
     """
     for patient_folder in os.listdir(root_directory):
-        patient_path = os.path.join(root_directory, patient_folder)
-        if os.path.isdir(patient_path):
+        patient_path = Path(root_directory, patient_folder)
+        if Path.is_dir(patient_path):
             delete_crc_files_in_patient(patient_path)
 
 
-def replace_folders(destination_directory, source_directory) -> None:
+def replace_folders(destination_directory: Path, source_directory: Path) -> None:
     """
     Replace directories in the destination directory with those from the source directory.
 
@@ -66,23 +67,22 @@ def replace_folders(destination_directory, source_directory) -> None:
 
     # Get a list of all subdirectories in the source directory
     source_subdirectories = [
-        os.path.join(source_directory, d)
+        Path(source_directory, d)
         for d in os.listdir(source_directory)
-        if os.path.isdir(os.path.join(source_directory, d))
+        if Path.is_dir(Path(source_directory, d))
     ]
 
     for source_subdir in tqdm(source_subdirectories, total=len(source_subdirectories)):
-        subdir_name = os.path.basename(source_subdir)
-        destination_subdir = os.path.join(destination_directory, subdir_name)
+        subdir_name = Path.name(source_subdir)
+        destination_subdir = Path(destination_directory, subdir_name)
 
-        if os.path.exists(destination_subdir):
+        if Path.exists(destination_subdir):
             # Directory with the same name already exists in destination, so replace it
             shutil.rmtree(destination_subdir)
         shutil.copytree(source_subdir, destination_subdir)
 
 
-
-def get_directory_filenames(directory):
+def get_directory_filenames(directory: Path) -> list:
     """
     Get the list of filenames in the specified directory.
 
@@ -91,43 +91,21 @@ def get_directory_filenames(directory):
     """
     return os.listdir(directory)
 
-
-def print_filenames(filenames) -> None:
-    """
-    Print the base names of filenames in a list.
-
-    :param filenames: A list of filenames.
-    """
-    for _filename in filenames:
-        pass
-
-
-def print_dict_values(dictionary) -> None:
-    """
-    Print the values of a dictionary.
-
-    :param dictionary: A dictionary.
-    """
-    for _key in dictionary:
-        pass
-
-
-def get_crc_filename(filename):
+def get_crc_filename(filename: Path) -> tuple:
     """
     Get the CRC filename and path corresponding to a given filename.
 
     :param filename: The input filename.
     :return: The CRC path and CRC basename.
     """
-    parent_dir = os.path.abspath(os.path.join(filename, os.pardir))
-    basename = os.path.basename(filename)
+    parent_dir = Path.resolve(Path(filename, os.pardir))
+    basename = Path.name(filename)
     crc_basename = f".{basename}.crc"
-    crc_path = os.path.join(parent_dir, crc_basename)
+    crc_path = Path(parent_dir, crc_basename)
 
     return crc_path, crc_basename
 
-
-def check_if_crc_exists(filename):
+def check_if_crc_exists(filename: Path) -> Path:
     """
     Check if a CRC file exists for a given filename.
 
@@ -135,10 +113,12 @@ def check_if_crc_exists(filename):
     :return: True if the CRC file exists, False otherwise.
     """
     crc_path, _ = get_crc_filename(filename)
-    return os.path.exists(crc_path)
+    return Path.exists(crc_path)
 
-
-def get_filenames_for_each_sequence(current_series_path, dicom_sequences):
+def get_filenames_for_each_sequence(
+    current_series_path: Path,
+    dicom_sequences: list,
+) -> dict:
     """
     Get a dictionary that maps sequence names to corresponding filenames in a series path.
 
@@ -147,14 +127,14 @@ def get_filenames_for_each_sequence(current_series_path, dicom_sequences):
     :return: A dictionary where keys are sequence names and values are lists of filenames.
     """
     dicom_filenames = [
-        os.path.join(current_series_path, filename)
+        Path(current_series_path, filename)
         for filename in os.listdir(current_series_path)
-        if filename.endswith(".dcm")
+        if filename.suffix == ".dcm"
     ]
     nifti_filenames = [
-        os.path.join(current_series_path, filename)
+        Path(current_series_path, filename)
         for filename in os.listdir(current_series_path)
-        if filename.endswith((".nii.gz", ".nii"))
+        if filename.suffix in (".nii.gz", ".nii")
     ]
 
     filenames_for_sequence = {seq_name: [] for seq_name in dicom_sequences}
@@ -183,17 +163,16 @@ def get_filenames_for_each_sequence(current_series_path, dicom_sequences):
         for filename in nifti_filenames:
             for filenames_list in filenames_for_sequence.values():
                 basenames_list = [
-                    os.path.basename(path).split(".")[0] for path in filenames_list
+                    Path.name(path).split(".")[0] for path in filenames_list
                 ]
-                # print(basenames_list)
-                if os.path.basename(filename).split(".")[0] in basenames_list:
+                if Path.name(filename).split(".")[0] in basenames_list:
                     filenames_list.append(filename)
                     break
 
     return filenames_for_sequence
 
 
-def find_next_available_series_name(series_names_in_parent_dir):
+def find_next_available_series_name(series_names_in_parent_dir: list) -> str:
     """
     Find the next available series name not present in the parent directory.
 
@@ -208,20 +187,21 @@ def find_next_available_series_name(series_names_in_parent_dir):
     return new_series_name
 
 
-def split_series(current_series_path, names_of_sequences) -> None:
+def split_series(current_series_path: Path, names_of_sequences: list) -> None:
     """
     Split a series into multiple series based on sequence names.
 
     :param current_series_path: The path to the current series directory.
     :param names_of_sequences: List of sequence names to split the series.
     """
-    parent_dir_path = os.path.abspath(os.path.join(current_series_path, os.pardir))
+    parent_dir_path = Path.resolve(Path(current_series_path, os.pardir))
     series_names_in_parent_dir = [
-        os.path.basename(filename) for filename in os.listdir(parent_dir_path)
+        Path.name(filename) for filename in os.listdir(parent_dir_path)
     ]
 
     filenames_for_sequence = get_filenames_for_each_sequence(
-        current_series_path, names_of_sequences,
+        current_series_path,
+        names_of_sequences,
     )
 
     for key in filenames_for_sequence:
@@ -229,22 +209,22 @@ def split_series(current_series_path, names_of_sequences) -> None:
             next_name = find_next_available_series_name(series_names_in_parent_dir)
         series_names_in_parent_dir.append(next_name)
 
-        new_dir_path = os.path.join(parent_dir_path, next_name)
-        if not os.path.exists(new_dir_path):
-            os.mkdir(new_dir_path)
+        new_dir_path = Path(parent_dir_path, next_name)
+        if not Path.exists(new_dir_path):
+            Path.mkdir(new_dir_path)
 
         for image_path in filenames_for_sequence[key]:
-            basename = os.path.basename(image_path)
-            move_path = os.path.join(new_dir_path, basename)
+            basename = Path.name(image_path)
+            move_path = Path(new_dir_path, basename)
             shutil.move(image_path, move_path)
 
             if check_if_crc_exists(image_path):
                 crc_path, crc_basename = get_crc_filename(image_path)
-                move_crc_path = os.path.join(new_dir_path, crc_basename)
+                move_crc_path = Path(new_dir_path, crc_basename)
                 shutil.move(crc_path, move_crc_path)
 
 
-def write_nifti_outside_series(path, file) -> None:
+def write_nifti_outside_series(path: Path, file: Path) -> None:
     """
     Write a message about a NIFTI file found outside of a Series folder.
 
@@ -257,7 +237,7 @@ def write_nifti_outside_series(path, file) -> None:
     )
 
 
-def write_patient_not_pass_qc(path, file) -> None:
+def write_patient_not_pass_qc(path: Path, file: Path) -> None:
     """
     Write a message about a patient folder that did not pass the Quality Check tool.
 
@@ -270,7 +250,7 @@ def write_patient_not_pass_qc(path, file) -> None:
     )
 
 
-def write_file_path(series_path, file) -> None:
+def write_file_path(series_path: Path, file: Path) -> None:
     """
     Write the path of a file to the output file.
 
@@ -280,7 +260,7 @@ def write_file_path(series_path, file) -> None:
     file.write(f"Issue in file: {series_path}\n")
 
 
-def write_num_dicom(num_dicom_files, file) -> None:
+def write_num_dicom(num_dicom_files: int, file: Path) -> None:
     """
     Write the number of DICOM files to the output file.
 
@@ -290,7 +270,7 @@ def write_num_dicom(num_dicom_files, file) -> None:
     file.write(f"Number of DICOM files: {num_dicom_files}\n")
 
 
-def write_num_nifti(num_nifti_files, file) -> None:
+def write_num_nifti(num_nifti_files: int, file: Path) -> None:
     """
     Write the number of NIFTI files to the output file.
 
@@ -300,7 +280,7 @@ def write_num_nifti(num_nifti_files, file) -> None:
     file.write(f"Number of NIFTI files: {num_nifti_files}\n")
 
 
-def write_num_nifti_slices(num_nifti_slices, file) -> None:
+def write_num_nifti_slices(num_nifti_slices: int, file: Path) -> None:
     """
     Write the number of NIFTI slices to the output file.
 
@@ -310,7 +290,7 @@ def write_num_nifti_slices(num_nifti_slices, file) -> None:
     file.write(f"Number of NIFTI slices: {num_nifti_slices}\n")
 
 
-def write_num_sequences(num_sequences, file) -> None:
+def write_num_sequences(num_sequences: int, file: Path) -> None:
     """
     Write the number of different DICOM sequences to the output file.
 
@@ -321,7 +301,12 @@ def write_num_sequences(num_sequences, file) -> None:
 
 
 def write_series_info(
-    series_path, num_dicom_files, num_nifti_files, num_nifti_slices, num_sequences, file,
+    series_path: Path,
+    num_dicom_files: int,
+    num_nifti_files: int,
+    num_nifti_slices: int,
+    num_sequences: int,
+    file: Path,
 ) -> None:
     """
     Write series information to the output file.
@@ -340,7 +325,7 @@ def write_series_info(
     write_num_sequences(num_sequences, file)
 
 
-def write_empty_series(series_path, file) -> None:
+def write_empty_series(series_path: Path, file: Path) -> None:
     """
     Write a message about an empty Series folder to the output file.
 
@@ -350,7 +335,12 @@ def write_empty_series(series_path, file) -> None:
     file.write(f"\nFound empty Series: {series_path}.\n")
 
 
-def write_found_only_nifti(series_path, num_nifti_files, num_nifti_slices, file) -> None:
+def write_found_only_nifti(
+    series_path: Path,
+    num_nifti_files: int,
+    num_nifti_slices: int,
+    file: Path,
+) -> None:
     """
     Write a message about a Series folder found with only NIFTI files to the output file.
 
@@ -365,7 +355,12 @@ def write_found_only_nifti(series_path, num_nifti_files, num_nifti_slices, file)
     write_num_nifti_slices(num_nifti_slices, file)
 
 
-def write_found_only_dicom(series_path, num_dicom_files, num_sequences, file) -> None:
+def write_found_only_dicom(
+    series_path: Path,
+    num_dicom_files: int,
+    num_sequences: int,
+    file: Path,
+) -> None:
     """
     Write a message about a Series folder found with only DICOM files to the output file.
 
@@ -380,7 +375,7 @@ def write_found_only_dicom(series_path, num_dicom_files, num_sequences, file) ->
     write_num_sequences(num_sequences, file)
 
 
-def write_split_is_required(series_path, num_sequences, file) -> None:
+def write_split_is_required(series_path: Path, num_sequences: int, file: Path) -> None:
     """
     Write a message about a Series folder requiring splitting to the output file.
 
@@ -393,7 +388,7 @@ def write_split_is_required(series_path, num_sequences, file) -> None:
     )
 
 
-def write_split_auto(file) -> None:
+def write_split_auto(file: Path) -> None:
     """
     Write a message that automatic splitting of a Series folder is possible to the output file.
 
@@ -402,7 +397,7 @@ def write_split_auto(file) -> None:
     file.write("Series folder can be split automatically.\n")
 
 
-def write_split_manual(file) -> None:
+def write_split_manual(file: Path) -> None:
     """
     Write a message that manual splitting of a Series folder is required to the output file.
 
@@ -414,7 +409,12 @@ def write_split_manual(file) -> None:
 
 
 def write_dicom_nifti_slices_incompatible(
-    series_path, num_dicom_files, num_nifti_files, num_nifti_slices, num_sequences, file,
+    series_path: Path,
+    num_dicom_files: int,
+    num_nifti_files: int,
+    num_nifti_slices: int,
+    num_sequences: int,
+    file: Path,
 ) -> None:
     """
     Write a message about incompatible number of DICOM files and NIFTI slices to the output file.
@@ -441,7 +441,12 @@ def write_dicom_nifti_slices_incompatible(
 
 
 def write_sequences_nifti_files_incompatible(
-    series_path, num_dicom_files, num_nifti_files, num_nifti_slices, num_sequences, file,
+    series_path: Path,
+    num_dicom_files: int,
+    num_nifti_files: int,
+    num_nifti_slices: int,
+    num_sequences: int,
+    file: Path,
 ) -> None:
     """
     Write a message about incompatible number of DICOM sequences and NIFTI files to the output file.
@@ -468,7 +473,12 @@ def write_sequences_nifti_files_incompatible(
 
 
 def write_more_nifti_than_dicom(
-    series_path, num_dicom_files, num_nifti_files, num_nifti_slices, num_sequences, file,
+    series_path: int,
+    num_dicom_files: int,
+    num_nifti_files: int,
+    num_nifti_slices: int,
+    num_sequences: int,
+    file: Path,
 ) -> None:
     """
     Write a message about finding more NIFTI files than DICOM files to the output file.
@@ -492,13 +502,13 @@ def write_more_nifti_than_dicom(
 
 
 def write_issues_to_report(
-    serie,
-    num_dicom_files,
-    num_nifti_files,
-    num_nifti_slices,
-    num_sequences,
-    dicom_sequences,
-    file,
+    serie: Path,
+    num_dicom_files: int,
+    num_nifti_files: int,
+    num_nifti_slices: int,
+    num_sequences: int,
+    dicom_sequences: list,
+    file: Path,
 ) -> None:
     """
     Write issues related to a series to a report file.
@@ -514,9 +524,8 @@ def write_issues_to_report(
     if num_dicom_files == 0:
         if num_nifti_files == 0:
             # Issue: Empty series
-            if os.path.isdir(serie) and not os.listdir(serie):
+            if Path.is_dir(serie) and not os.listdir(serie):
                 shutil.rmtree(serie)
-            # write_empty_series(serie, file)
         else:
             # Issue: Only NIFTI files found
             write_found_only_nifti(serie, num_nifti_files, num_nifti_slices, file)
@@ -596,7 +605,7 @@ def write_issues_to_report(
         )
 
 
-def get_series_attributes(serie, file):
+def get_series_attributes(serie: Path, file: Path) -> tuple:
     """
     Get attributes of a series including the number of DICOM files, NIFTI files, NIFTI slices, sequences, and DICOM sequences.
 
@@ -617,16 +626,16 @@ def get_series_attributes(serie, file):
 
     # Loop over each file in the Series
     for filename in filenames:
-        file_path = os.path.join(serie, filename)
+        file_path = Path(serie, filename)
 
-        if file_path.endswith(".dcm"):  # Check if DICOM
+        if file_path.suffix == ".dcm":  # Check if DICOM
             # Increase the total DICOM files
             num_dicom_files += 1
 
             # Read DICOM file. It might be corrupted.
             try:
                 img = dicom.dcmread(file_path)
-            except:
+            except TypeError:
                 file.write(
                     f"\nDICOM file {file_path} is missing header information and cannot be read.\n",
                 )
@@ -651,14 +660,16 @@ def get_series_attributes(serie, file):
                     dicom_sequences.append(tag)
                 except AttributeError:
                     continue
-        elif file_path.endswith((".nii", ".nii.gz")):  # Check if NIFTI
+        elif (
+            file_path.suffix in (".nii", ".nii.gz")
+        ):  # Check if NIFTI
             # Increase the total NIFTI files
             num_nifti_files += 1
 
             # Read NIFTI file. It might be corrupted.
             try:
                 img = nib.load(file_path)
-            except:
+            except TypeError:
                 file.write(
                     f"\nNIFTI file {file_path} is missing tags and cannot be read.\n",
                 )
@@ -708,11 +719,11 @@ def find_average_resolution() -> None:
         "prostate": ["dp1", "dp2"],
     }
 
-    def find_modality_resolution(serie_path):
+    def find_modality_resolution(serie_path: Path) -> tuple:
         dicom_filenames = [
-            os.path.join(serie_path, filename)
+            Path(serie_path, filename)
             for filename in os.listdir(serie_path)
-            if filename.endswith(".dcm")
+            if filename.suffix == ".dcm"
         ]
         if len(dicom_filenames):
             dicom_name = dicom_filenames[0]
@@ -727,7 +738,7 @@ def find_average_resolution() -> None:
                 )
                 modality = image.Modality
                 resolution = (image.Rows, image.Columns)
-            except Exception:
+            except TypeError:
                 return None, None
         else:
             return None, None
@@ -735,7 +746,7 @@ def find_average_resolution() -> None:
         return modality, resolution
 
     # Function to update the resolutions
-    def update_resolutions(resolution, image_modality) -> None:
+    def update_resolutions(resolution: tuple, image_modality: str) -> None:
         if resolution and image_modality:
             if image_modality not in resolutions:
                 resolutions[image_modality] = []
@@ -748,12 +759,11 @@ def find_average_resolution() -> None:
             database_path = r"prm/incisive2"
             working_path = f"{database_path}/{cancer_type}/{data_provider}/data"
 
-
             # Get all patients paths
             patients_paths = [
-                os.path.join(working_path, filename)
+                Path(working_path, filename)
                 for filename in os.listdir(working_path)
-                if os.path.isdir(os.path.join(working_path, filename))
+                if Path.is_dir(Path(working_path, filename))
             ]
 
             # Get all studies and check for NIFTI files outside of Series
@@ -761,8 +771,8 @@ def find_average_resolution() -> None:
             for patient_path in patients_paths:
                 studies = os.listdir(patient_path)
                 for study in studies:
-                    study_path = os.path.join(patient_path, study)
-                    if os.path.isdir(study_path):
+                    study_path = Path(patient_path, study)
+                    if Path.is_dir(study_path):
                         studies_paths.append(study_path)
 
             # Get all series paths
@@ -770,8 +780,8 @@ def find_average_resolution() -> None:
             for study_path in studies_paths:
                 series = os.listdir(study_path)
                 for serie in series:
-                    serie_path = os.path.join(study_path, serie)
-                    if os.path.isdir(serie_path):
+                    serie_path = Path(study_path, serie)
+                    if Path.is_dir(serie_path):
                         series_paths.append(serie_path)
 
             for serie_path in tqdm(series_paths, total=len(series_paths)):
@@ -791,10 +801,6 @@ def find_average_resolution() -> None:
         average_columns = total_columns / len(resolutions_list)
         average_resolutions[image_modality] = (average_rows, average_columns)
 
-    # Print the average resolutions
-    for image_modality in average_resolutions:
-        pass
-
 
 def find_devices() -> None:
     # Define a dictionary to store histograms for each image modality
@@ -811,21 +817,22 @@ def find_devices() -> None:
         "prostate": ["dp1", "dp2"],
     }
 
-    def find_manufacturer_model(serie_path):
+    def find_manufacturer_model(serie_path: Path) -> tuple:
         dicom_filenames = [
-            os.path.join(serie_path, filename)
+            Path(serie_path, filename)
             for filename in os.listdir(serie_path)
-            if filename.endswith(".dcm")
+            if filename.suffix == ".dcm"
         ]
         if len(dicom_filenames):
             dicom_name = dicom_filenames[0]
             try:
                 image = dicom.dcmread(
-                    dicom_name, specific_tags=[(0x0008, 0x0070), (0x0008, 0x1090)],
+                    dicom_name,
+                    specific_tags=[(0x0008, 0x0070), (0x0008, 0x1090)],
                 )
                 manufacturer = image.Manufacturer
                 model = image.ManufacturerModelName
-            except Exception:
+            except TypeError:
                 return None, None
         else:
             return None, None
@@ -833,14 +840,13 @@ def find_devices() -> None:
         return manufacturer, model
 
     # Function to update the resolutions
-    def update_devices(manufacturer, model) -> None:
+    def update_devices(manufacturer: str, model: str) -> None:
         if manufacturer and model:
             device = f"{manufacturer} - {model}"
             if device not in devices:
                 devices[device] = 1
             else:
                 devices[device] += 1
-            # devices.append(device)
 
     for cancer_type in cancer_types:
         data_providers = dps[cancer_type]
@@ -849,12 +855,11 @@ def find_devices() -> None:
             database_path = r"prm/incisive2"
             working_path = f"{database_path}/{cancer_type}/{data_provider}/data"
 
-
             # Get all patients paths
             patients_paths = [
-                os.path.join(working_path, filename)
+                Path(working_path, filename)
                 for filename in os.listdir(working_path)
-                if os.path.isdir(os.path.join(working_path, filename))
+                if Path.is_dir(Path(working_path, filename))
             ]
 
             # Get all studies and check for NIFTI files outside of Series
@@ -862,8 +867,8 @@ def find_devices() -> None:
             for patient_path in patients_paths:
                 studies = os.listdir(patient_path)
                 for study in studies:
-                    study_path = os.path.join(patient_path, study)
-                    if os.path.isdir(study_path):
+                    study_path = Path(patient_path, study)
+                    if Path.is_dir(study_path):
                         studies_paths.append(study_path)
 
             # Get all series paths
@@ -871,8 +876,8 @@ def find_devices() -> None:
             for study_path in studies_paths:
                 series = os.listdir(study_path)
                 for serie in series:
-                    serie_path = os.path.join(study_path, serie)
-                    if os.path.isdir(serie_path):
+                    serie_path = Path(study_path, serie)
+                    if Path.is_dir(serie_path):
                         series_paths.append(serie_path)
 
             for serie_path in tqdm(series_paths, total=len(series_paths)):
@@ -887,24 +892,24 @@ def find_devices() -> None:
 
     # Remove the existing report file if it exists
     file_path = r"tmp/devices.txt"
-    if os.path.exists(file_path):
+    if Path.exists(file_path):
         with contextlib.suppress(OSError):
-            os.remove(file_path)
+            Path.unlink(file_path)
 
-    # Print the average resolutions
-    with open(file_path, "a") as f:
+    # Write the average resolutions
+    with Path.open(file_path, "a") as f:
         for device, occ in sorted_devices.items():
             f.write(f"Manufacturer and Model: {device}, Occurences: {occ}\n")
 
 
 def count_dicom_images() -> None:
-    def count_dicom_files(folder_path):
+    def count_dicom_files(folder_path: Path) -> int:
         dicom_count = 0
 
         for root, _, files in os.walk(folder_path):
             for filename in files:
-                file_path = os.path.join(root, filename)
-                if file_path.endswith(".dcm"):
+                file_path = Path(root, filename)
+                if file_path.suffix == ".dcm":
                     dicom_count += 1
 
         return dicom_count
@@ -928,12 +933,11 @@ def count_dicom_images() -> None:
             database_path = r"prm/incisive2"
             working_path = f"{database_path}/{cancer_type}/{data_provider}/data"
 
-
             # Get all patients paths
             patients_paths = [
-                os.path.join(working_path, filename)
+                Path(working_path, filename)
                 for filename in os.listdir(working_path)
-                if os.path.isdir(os.path.join(working_path, filename))
+                if Path.is_dir(Path(working_path, filename))
             ]
 
             # Get all studies and check for NIFTI files outside of Series
@@ -941,8 +945,8 @@ def count_dicom_images() -> None:
             for patient_path in patients_paths:
                 studies = os.listdir(patient_path)
                 for study in studies:
-                    study_path = os.path.join(patient_path, study)
-                    if os.path.isdir(study_path):
+                    study_path = Path(patient_path, study)
+                    if Path.is_dir(study_path):
                         studies_paths.append(study_path)
 
             # Get all series paths
@@ -950,8 +954,8 @@ def count_dicom_images() -> None:
             for study_path in studies_paths:
                 series = os.listdir(study_path)
                 for serie in series:
-                    serie_path = os.path.join(study_path, serie)
-                    if os.path.isdir(serie_path):
+                    serie_path = Path(study_path, serie)
+                    if Path.is_dir(serie_path):
                         series_paths.append(serie_path)
 
             total_dicom = 0
@@ -959,11 +963,7 @@ def count_dicom_images() -> None:
                 serie_dicom_count = count_dicom_files(serie_path)
                 total_dicom += serie_dicom_count
 
-            # print(f"Number of series: {len(series_paths)}")
-            # print(series_paths)
-
             dicom_per_cancer_type += total_dicom
-
 
 
 def find_number_images_per_modality() -> None:
@@ -981,18 +981,18 @@ def find_number_images_per_modality() -> None:
         "prostate": ["dp1", "dp2"],
     }
 
-    def find_modality(serie_path):
+    def find_modality(serie_path: Path) -> str:
         dicom_filenames = [
-            os.path.join(serie_path, filename)
+            Path(serie_path, filename)
             for filename in os.listdir(serie_path)
-            if filename.endswith(".dcm")
+            if filename.suffix == ".dcm"
         ]
         if len(dicom_filenames):
             dicom_name = dicom_filenames[0]
             try:
                 image = dicom.dcmread(dicom_name, specific_tags=[(0x0008, 0x0060)])
                 modality = image.Modality
-            except Exception:
+            except TypeError:
                 return None
         else:
             return None
@@ -1000,7 +1000,7 @@ def find_number_images_per_modality() -> None:
         return modality
 
     # Function to update the resolutions
-    def update_images_per_modality(modality) -> None:
+    def update_images_per_modality(modality: str) -> None:
         if modality:
             if modality not in images_per_modality:
                 images_per_modality[modality] = 1
@@ -1014,12 +1014,11 @@ def find_number_images_per_modality() -> None:
             database_path = r"prm/incisive2"
             working_path = f"{database_path}/{cancer_type}/{data_provider}/data"
 
-
             # Get all patients paths
             patients_paths = [
-                os.path.join(working_path, filename)
+                Path(working_path, filename)
                 for filename in os.listdir(working_path)
-                if os.path.isdir(os.path.join(working_path, filename))
+                if Path.is_dir(Path(working_path, filename))
             ]
 
             # Get all studies and check for NIFTI files outside of Series
@@ -1027,8 +1026,8 @@ def find_number_images_per_modality() -> None:
             for patient_path in patients_paths:
                 studies = os.listdir(patient_path)
                 for study in studies:
-                    study_path = os.path.join(patient_path, study)
-                    if os.path.isdir(study_path):
+                    study_path = Path(patient_path, study)
+                    if Path.is_dir(study_path):
                         studies_paths.append(study_path)
 
             # Get all series paths
@@ -1036,8 +1035,8 @@ def find_number_images_per_modality() -> None:
             for study_path in studies_paths:
                 series = os.listdir(study_path)
                 for serie in series:
-                    serie_path = os.path.join(study_path, serie)
-                    if os.path.isdir(serie_path):
+                    serie_path = Path(study_path, serie)
+                    if Path.is_dir(serie_path):
                         series_paths.append(serie_path)
 
             for serie_path in tqdm(series_paths, total=len(series_paths)):
@@ -1052,17 +1051,17 @@ def find_number_images_per_modality() -> None:
 
     # Remove the existing report file if it exists
     file_path = r"tmp/images_per_modality.txt"
-    if os.path.exists(file_path):
+    if Path.exists(file_path):
         with contextlib.suppress(OSError):
-            os.remove(file_path)
+            Path.unlink(file_path)
 
-    # Print the average resolutions
-    with open(file_path, "a") as f:
+    # Write the average resolutions
+    with Path.open(file_path, "a") as f:
         for modality, occ in sorted_images_per_modality.items():
             f.write(f"For Modality: {modality} - Number of Images: {occ}\n")
 
 
-def create_directory_structure(base_dir) -> None:
+def create_directory_structure(base_dir: Path) -> None:
     """
     Create directory structure as specified.
 
@@ -1073,27 +1072,25 @@ def create_directory_structure(base_dir) -> None:
         None
     """
     # Check if 'reports' directory exists
-    reports_dir = os.path.join(base_dir, "reports")
-    if os.path.exists(reports_dir):
+    reports_dir = Path(base_dir, "reports")
+    if Path.exists(reports_dir):
         shutil.rmtree(reports_dir)
 
     # Create 'reports' directory
-    os.makedirs(reports_dir)
+    Path.mkdir(reports_dir, parents=True)
 
     # Create data provider directories inside 'reports'
     for dp in ["dp1", "dp2"]:
-        dp_dir = os.path.join(reports_dir, dp)
-        os.makedirs(dp_dir)
+        dp_dir = Path(reports_dir, dp)
+        Path.mkdir(dp_dir, parents=True)
 
         # Create subdirectories inside each data provider directory
         for sub_dir in ["breast", "colorectal", "lung", "prostate"]:
-            sub_dir_path = os.path.join(dp_dir, sub_dir)
-            os.makedirs(sub_dir_path)
+            sub_dir_path = Path(dp_dir, sub_dir)
+            Path.mkdir(sub_dir_path, parents=True)
 
 
-
-def correct_dicom_directory_structure(database_path=r"prm/incisive2") -> None:
-
+def correct_dicom_directory_structure(database_path: Path = r"prm/incisive2") -> None:
     # Provide a list of the cancer types to check
     cancer_types = ["breast", "colorectal", "lung", "prostate"]
 
@@ -1111,25 +1108,25 @@ def correct_dicom_directory_structure(database_path=r"prm/incisive2") -> None:
         for data_provider in data_providers[cancer_type]:
             # Define the target directory to examine based on cancer type and data provider name
 
-            working_path = rf"{database_path}/{cancer_type}/{data_provider}/data"
+            working_path = Path(rf"{database_path}/{cancer_type}/{data_provider}/data")
 
             # Define the report file path
-            txt_file_path = (
-                rf"tmp/reports/{data_provider}/{cancer_type}/report_issues.txt"
+            txt_file_path = Path(
+                rf"tmp/reports/{data_provider}/{cancer_type}/report_issues.txt",
             )
+            print(f"Generating issues .txt file in {txt_file_path}")
 
             # Remove the existing report file if it exists
-            if os.path.exists(txt_file_path):
+            if Path.exists(txt_file_path):
                 with contextlib.suppress(OSError):
-                    os.remove(txt_file_path)
+                    Path.unlink(txt_file_path)
 
-
-            with open(txt_file_path, "a") as file:
+            with Path.open(txt_file_path, "a") as file:
                 # Get all patients paths
                 patients_paths = [
-                    os.path.join(working_path, filename)
+                    Path(working_path, filename)
                     for filename in os.listdir(working_path)
-                    if os.path.isdir(os.path.join(working_path, filename))
+                    if Path.is_dir(Path(working_path, filename))
                 ]
 
                 # Get all studies and check for NIFTI files outside of Series
@@ -1137,14 +1134,15 @@ def correct_dicom_directory_structure(database_path=r"prm/incisive2") -> None:
                 for patient_path in patients_paths:
                     studies = os.listdir(patient_path)
                     for study in studies:
-                        study_path = os.path.join(patient_path, study)
-                        if study_path.endswith((".nii", ".nii.gz")):
+                        study_path = Path(patient_path, study)
+                        if (
+                            study_path.suffix in (".nii", ".nii.gz")
+                        ):
                             # Check if NIFTI is outside of Series -> Issue
                             write_nifti_outside_series(study_path, file)
-                        # TODO Include check about QC
-                        elif "Study" in study_path:
+                        elif "Study" in str(study_path):
                             write_patient_not_pass_qc(study_path, file)
-                        elif os.path.isdir(study_path):
+                        elif Path.is_dir(study_path):
                             studies_paths.append(study_path)
 
                 # Get all series paths
@@ -1152,11 +1150,13 @@ def correct_dicom_directory_structure(database_path=r"prm/incisive2") -> None:
                 for study_path in studies_paths:
                     series = os.listdir(study_path)
                     for serie in series:
-                        serie_path = os.path.join(study_path, serie)
-                        if serie_path.endswith((".nii", ".nii.gz")):
+                        serie_path = Path(study_path, serie)
+                        if (
+                            study_path.suffix in (".nii", ".nii.gz")
+                        ):
                             # Check if NIFTI outside of Series -> Issue
                             write_nifti_outside_series(serie_path, file)
-                        elif os.path.isdir(serie_path):
+                        elif Path.is_dir(serie_path):
                             series_paths.append(serie_path)
 
                 # For each series, get the attributes and write existing issues
@@ -1189,5 +1189,5 @@ def main_cli() -> None:
 
 
 if __name__ == "__main__":
-    database_path = r"prm/incisive2"
+    database_path = Path("prm/incisive2")
     correct_dicom_directory_structure(database_path)
