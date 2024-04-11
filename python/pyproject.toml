@@ -1,7 +1,7 @@
 [project]
 dependencies = [
   "fire==0.6.0",
-  "nibabel==5.2.1",
+  "nibabel==5.0.0",
   "pydicom==2.4.4",
   "tqdm==4.66.2"
 ]
