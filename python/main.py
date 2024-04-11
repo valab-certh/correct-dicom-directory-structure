@@ -6,8 +6,8 @@ import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import nibabel
 import pydicom as dicom
-from nibabel import loadsave as nibloadsave
 from tqdm import tqdm
 
 if TYPE_CHECKING:
@@ -684,16 +684,15 @@ def get_series_attributes(  # noqa: PLR0912, C901
 
             # Read NIFTI file. It might be corrupted.
             try:
-                mask = nibloadsave.load(str(file_path))
+                mask = nibabel.loadsave.load(str(file_path))
             except TypeError:
                 file.write(
                     f"\nNIFTI file {file_path} is missing tags and cannot be read.\n",
                 )
                 continue
-            print(mask.header.get_data_shape()[3])
             # Append NIFTI slices. NIFTI might have invalid dimensions
             try:
-                nifti_slices.append(mask.header.get_data_shape()[3])
+                nifti_slices.append(mask.shape[2])
             except IndexError:
                 file.write(f"\nNIFTI File: {file_path} has no valid dimensions.\n")
         else:  # In case neither DICOM nor NIFTI file.
@@ -1032,7 +1031,6 @@ def correct_dicom_directory_structure(  # noqa: C901
             txt_file_path = Path(
                 rf"tmp/reports/{data_provider}/{cancer_type}/report_issues.txt",
             )
-            print(f"Generating {txt_file_path}")
             # Remove the existing report file if it exists
             if Path.exists(txt_file_path):
                 with contextlib.suppress(OSError):
