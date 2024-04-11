@@ -1,9 +1,9 @@
 [project]
 dependencies = [
   "fire==0.6.0",
-  "pydicom==2.4.4",
   "nibabel==5.2.1",
-  "tqdm==2.2.3"
+  "pydicom==2.4.4",
+  "tqdm==4.66.2"
 ]
 name = "correct-dicom-directory-structure"
 version = "0.0.0"

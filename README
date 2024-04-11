@@ -10,7 +10,6 @@ git clone github.com/valab-certh/correct-dicom-directory-structure.git $HOME/git
 cd $HOME/github.com/valab-certh/correct-dicom-directory-structure
 
 # Development
-cd python/python/ && make clean check all && cd ../..
 cd python/ && make clean check all && cd ..
 
 # Staging
@@ -20,4 +19,4 @@ cd python/ && make STAGING=1
 pip install https://api.github.com/repos/valab-certh/correct-dicom-directory-structure/tarball/main#subdirectory=python
 
 # Usage
-correct_dicom_directory_structure "prm/incisive2"
+correct_dicom_directory_structure "python/prm/incisive2"
