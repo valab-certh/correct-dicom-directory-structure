@@ -1,6 +1,5 @@
 # Correct dicom directory structure
 The user must ensure that the input directory follows the proposed structure
-
 database/
 ├─ cancer_type/
 │  ├─ data_provider/
