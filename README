@@ -1,4 +1,15 @@
-# correct-dicom-directory-structure
+# Correct dicom directory structure
+The user must ensure that the input directory follows the proposed structure
+.
+└── database/
+    └── cancer_type/
+        └── data_provider/
+            └── data/
+                └── patient/
+                    └── study/
+                        └── series/
+                            ├── Image.dcm
+                            └── Image.nii.gz
 
 # Requirements
 POSIX Shell & Utilities
