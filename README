@@ -1,4 +1,4 @@
-# Correct dicom directory structure
+# Correct DICOM directory structure
 The user must ensure that the input directory follows the proposed structure
 database/
 ├─ cancer_type/
@@ -30,3 +30,4 @@ pip install https://api.github.com/repos/valab-certh/correct-dicom-directory-str
 
 # Usage
 correct_dicom_directory_structure "python/prm/incisive2"
+
