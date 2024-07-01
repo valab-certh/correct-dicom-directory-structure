@@ -1,20 +1,20 @@
 [project]
 dependencies = [
   "fire==0.6.0",
-  "nibabel==5.0.0",
+  "nibabel==5.2.1",
   "pydicom==2.4.4",
-  "tqdm==4.66.2"
+  "tqdm==4.66.4"
 ]
 name = "correct-dicom-directory-structure"
 version = "0.0.0"
 
 [project.optional-dependencies]
 dev = [
-  "coverage==7.4.4",
+  "coverage==7.5.4",
   "djlint==1.34.1",
-  "mypy==1.9.0",
-  "ruff==0.3.4",
-  "ssort==0.12.4",
+  "mypy==1.10.1",
+  "ruff==0.5.0",
+  "ssort==0.13.0",
   "toml-sort==0.23.1"
 ]
 
